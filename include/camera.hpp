@@ -5,15 +5,16 @@
 //  Created by 이용규 on 4/9/25.
 //
 
-#pragma once
+#ifndef Camera_HPP
+#define Camera_HPP
 
 #ifndef PI
-#define PI 3.141592653589793f
+#define PI 3.14159265358979323846f
 #endif
 
 
-#include <glew.h>
-#include <glfw3.h>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -24,16 +25,23 @@ void scrollCallback(GLFWwindow *window, double xoffset, double yoffset);
 
 struct Camera {
     
+    void setPosition(const glm::vec3& initPos) {
+        initPosition = initPos;
+        curPosition = initPos;
+    }
+    
     glm::vec3 initPosition = glm::vec3(0, 0, 10);
     glm::vec3 look = glm::vec3(0, 0, 0);
     glm::vec3 up = glm::vec3(0, 1, 0);
-    
-    glm::vec3 curPosition = glm::vec3(0, 0, 10);
     
     float theta;
     float phi;
     float fovy = 45.f;
     
+private:
+    glm::vec3 curPosition = glm::vec3(0, 0, 10);
+    
+public:
     glm::mat4 getRotate() {
         glm::mat4 rotY = glm::rotate(theta, glm::vec3(0, 1, 0));
         glm::mat4 rotX = glm::rotate(phi, glm::vec3(1, 0, 0));
@@ -55,6 +63,10 @@ struct Camera {
     void glfwSetCallbacks(GLFWwindow* window) {
         glfwSetCursorPosCallback(window, cursorPosCallback);
         glfwSetScrollCallback(window, scrollCallback);
+    }
+    
+    glm::vec3 getCurPosition() {
+        return curPosition;
     }
 };
 
@@ -96,6 +108,9 @@ void cursorPosCallback(GLFWwindow *window, double xpos, double ypos)
 
 void scrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
+    // Y Offset - FOVY Modification
     camera.fovy -= yoffset / 10;
     camera.fovy = comp::clamp(camera.fovy, 0.01f, 180.f-0.01f);
 }
+
+#endif

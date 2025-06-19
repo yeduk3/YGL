@@ -12,6 +12,9 @@
 #include "GLFW/glfw3.h"
 #include <stdio.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <iostream>
 using std::cerr;
 using std::endl;
@@ -51,7 +54,7 @@ struct Framebuffer {
     int width = 0, height = 0;
     
     GLuint renderbuffer = 0;
-    GLuint *textureIDs = nullptr;
+    std::vector<GLuint> textureIDs = {};
     
     /** Generate a new framebuffer object.
      
@@ -111,14 +114,17 @@ struct Framebuffer {
      
         - parameter format: Texture's format used when creating texture.
      */
-    void attachTexture2D(const int &nTexture, const TextureFormat &format) {
+    void attachTexture2D(const int &nTexture, const TextureFormat &format, int width = -1, int height = -1) {
+        if (width  < 0) width  = this->width;
+        if (height < 0) height = this->height;
+
         this->bind();
         
-        this->textureIDs = (GLuint *) malloc(nTexture * sizeof(GLuint));
-        
-        glGenTextures(nTexture, this->textureIDs);
         for (int i = 0; i < nTexture; i++) {
-            glBindTexture(GL_TEXTURE_2D, this->textureIDs[i]);
+            textureIDs.push_back(-1);
+            auto curidx = textureIDs.size()-1;
+            glGenTextures(nTexture, &textureIDs[curidx]);
+            glBindTexture(GL_TEXTURE_2D, this->textureIDs[curidx]);
             glTexImage2D(GL_TEXTURE_2D,
                          0,
                          format.internalFormat,
@@ -130,17 +136,18 @@ struct Framebuffer {
                          0);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            auto unit = GL_COLOR_ATTACHMENT0 + int(curidx-1);
             glFramebufferTexture2D(GL_FRAMEBUFFER,
-                                   GL_COLOR_ATTACHMENT0 + i,
+                                   unit,
                                    GL_TEXTURE_2D,
-                                   this->textureIDs[i],
+                                   this->textureIDs[curidx],
                                    0);
             GLint err = glGetError();
             if (err != GL_NO_ERROR) {
                printf("%08X ", err);
             }
 
-            glDrawBuffer(GL_COLOR_ATTACHMENT0 + i);
+            glDrawBuffer(unit);
         }
         GLint err = glGetError();
         if (err != GL_NO_ERROR) {
@@ -169,19 +176,53 @@ struct Framebuffer {
      
         - parameter internalFormat: Texture's internalFormat used when create TextureFormat object and call again.
      */
-    void attachTexture2D(const int nTexture, const GLint internalFormat) {
+    void attachTexture2D(const int nTexture, const GLint internalFormat, const int width = -1, const int height = -1) {
     //    this->bind();
         
         TextureFormat tf;
         tf.generate(internalFormat);
         
-        this->attachTexture2D(nTexture, tf);
+        this->attachTexture2D(nTexture, tf, width, height);
         GLint err = glGetError();
         if (err != GL_NO_ERROR) {
            printf("%08X ", err);
         }
         
         this->unbind();
+    }
+    
+    
+    int loadTexture2D(const char *fileName, int &width, int &height) {
+        int bytesPerPixel;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char *data = stbi_load(fileName,
+                                        &width,
+                                        &height,
+                                        &bytesPerPixel,
+                                        4);
+        
+        textureIDs.push_back(-1);
+        int tid = int(textureIDs.size())-1;
+        
+        if( data != nullptr ) {
+            glGenTextures(1, &textureIDs[tid]);
+            glBindTexture(GL_TEXTURE_2D, textureIDs[tid]);
+    #ifdef __APPLE__
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    #else
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    #endif
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+            stbi_image_free(data);
+        } else {
+            printf("Texture <%s> not found.\n", fileName);
+            return -1;
+        }
+        glActiveTexture(GL_TEXTURE0 + tid);
+        return tid;
     }
 
     void attachRenderBuffer(const GLenum internalFormat) {
@@ -240,9 +281,8 @@ struct Framebuffer {
         if (this->id != 0) {
             glDeleteFramebuffers(1, &this->id);
         }
-        if (this->textureIDs != nullptr) {
-            glDeleteTextures(1, this->textureIDs); // 텍스처 삭제
-            free(this->textureIDs);
+        for (auto i = 0; i < textureIDs.size(); i++) {
+            glDeleteTextures(1, &textureIDs[i]);
         }
         if (this->renderbuffer != 0) {
             glDeleteRenderbuffers(1, &this->renderbuffer); // 렌더버퍼 삭제

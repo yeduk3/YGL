@@ -57,74 +57,24 @@ struct Program
         return true;
     }
 
-//    void loadShaderByText(const std::string &vShaderText, const std::string &fShaderText)
-//    {
-//        // Create Program
-//        programID = glCreateProgram();
-//        std::cout << "Program " << programID << " created" << std::endl;
-//
-//        // Create Shader by its type
-//        vertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-//        fragShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-//
-//        // Vertex Shader
-//        const GLchar *vShaderCode = vShaderText.c_str();
-//        glShaderSource(vertexShaderID, 1, &vShaderCode, 0);
-//        glCompileShader(vertexShaderID);
-//        if (shaderCompileCheck(vertexShaderID))
-//            glAttachShader(programID, vertexShaderID);
-//        else
-//        {
-//            std::cout << "Vertex Shader: " << vertexShaderName << "(" << vShaderText.length() << ") with ID " << vertexShaderID << " compile failed." << std::endl;
-//            cleanUp();
-//            return;
-//        }
-//
-//        // Fragment Shader
-//        const GLchar *fShaderCode = fShaderText.c_str();
-//        glShaderSource(fragShaderID, 1, &fShaderCode, 0);
-//        glCompileShader(fragShaderID);
-//        if (shaderCompileCheck(fragShaderID))
-//            glAttachShader(programID, fragShaderID);
-//        else
-//        {
-//            std::cout << "Fragment Shader: " << fragShaderName << "(" << fShaderText.length() << ") with ID " << fragShaderID << " compile failed." << std::endl;
-//            cleanUp();
-//            return;
-//        }
-//
-//        linkShader();
-//    }
     void loadShader(const char *vShaderFile, const char *fShaderFile)
     {
+        cleanUp();
+        
         // Create Program
         programID = glCreateProgram();
         std::cout << "Program " << programID << " created" << std::endl;
         
-//        vertexShaderName = std::string(vShaderFile);
-//        fragShaderName = std::string(fShaderFile);
-
-        cleanUp();
-
-//        std::string vShaderText = loadText(vShaderFile);
-//        // vertex shader는 있어야 함.
-//        if (vShaderText.length() < 1)
-//        {
-//            std::cerr << "Vertex shader has no code" << std::endl;
-//            return;
-//        }
-//        std::string fShaderText = loadText(fShaderFile);
-//
-//        loadShaderByText(vShaderText, fShaderText);
-        
         loadShaderOf(vShaderFile, GL_VERTEX_SHADER);
-        loadShaderOf(vShaderFile, GL_FRAGMENT_SHADER);
+        loadShaderOf(fShaderFile, GL_FRAGMENT_SHADER);
         
         linkShader();
     }
     
     void loadShader(const char *vShaderFile, const char *gShaderFile, const char *fShaderFile)
     {
+        cleanUp();
+        
         // Create Program
         programID = glCreateProgram();
         std::cout << "Program " << programID << " created" << std::endl;
@@ -135,26 +85,27 @@ struct Program
         
         linkShader();
     }
-
-
-    // This function doesn't include linking.
-//    void loadGeomShader(const char *gShaderFile)
-//    {
-//        geomShaderName = std::string(gShaderFile);
-//
-//        std::string gShaderText = loadText(gShaderFile);
-//
-//        geomShaderID = glCreateShader(GL_GEOMETRY_SHADER);
-//
-//        const GLchar *gShaderCode = gShaderText.c_str();
-//        glShaderSource(geomShaderID, 1, &gShaderCode, 0);
-//        glCompileShader(geomShaderID);
-//        if(shaderCompileCheck(geomShaderID))
-//            glAttachShader(programID, geomShaderID);
-//        else {
-//            std::cout << "Geometry Shader: " << geomShaderName << "(" << gShaderText.length() << ") with ID " << geomShaderID << " compile failed." << std::endl;
-//        }
-//    }
+    
+    void loadShader(const char *vShaderFile,
+                    const char *tcShaderFile,
+                    const char *teShaderFile,
+                    const char *gShaderFile,
+                    const char *fShaderFile)
+    {
+        cleanUp();
+        
+        // Create Program
+        programID = glCreateProgram();
+        std::cout << "Program " << programID << " created" << std::endl;
+        
+        loadShaderOf(vShaderFile, GL_VERTEX_SHADER);
+        loadShaderOf(tcShaderFile, GL_TESS_CONTROL_SHADER);
+        loadShaderOf(teShaderFile, GL_TESS_EVALUATION_SHADER);
+        loadShaderOf(gShaderFile, GL_GEOMETRY_SHADER);
+        loadShaderOf(fShaderFile, GL_FRAGMENT_SHADER);
+        
+        linkShader();
+    }
     
     void loadShaderOf(const char *shaderFile, const GLenum shaderType) {
         std::string shaderName = std::string(shaderFile);

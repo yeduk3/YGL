@@ -2,6 +2,11 @@
 
 This library is developed to use OpenGL conveniently.
 
+> [!NOTE]
+> glfw, glew libraries are needed inside the library folder.
+> glfw, glew, glm, stb_image headers are needed inside the include folder.
+> Please check what is being ignored in this repo.
+
 ## program.hpp
 
 Create and manage shader program

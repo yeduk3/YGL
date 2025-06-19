@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <glew.h> // GLuint
+#include <GL/glew.h> // GLuint
 
 #include <glm/glm.hpp> // vec3
 

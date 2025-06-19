@@ -1,1 +1,9 @@
 .DS_Store
+
+include/glm/*
+include/GL/*
+include/GLFW/*
+include/stb_image.h
+
+library/libGLEW.2.2.0.dylib
+library/libglfw.3.4.dylib
