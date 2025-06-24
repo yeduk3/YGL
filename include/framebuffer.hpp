@@ -14,6 +14,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <error.hpp>
 
 #include <iostream>
 using std::cerr;
@@ -55,6 +56,9 @@ struct Framebuffer {
     
     GLuint renderbuffer = 0;
     std::vector<GLuint> textureIDs = {};
+    std::vector<GLuint> drawBufs = {};
+    
+    bool depthTest = true;
     
     /** Generate a new framebuffer object.
      
@@ -121,9 +125,9 @@ struct Framebuffer {
         this->bind();
         
         for (int i = 0; i < nTexture; i++) {
-            textureIDs.push_back(-1);
-            auto curidx = textureIDs.size()-1;
-            glGenTextures(nTexture, &textureIDs[curidx]);
+            auto curidx = this->textureIDs.size();
+            this->textureIDs.push_back(-1);
+            glGenTextures(1, &this->textureIDs[curidx]);
             glBindTexture(GL_TEXTURE_2D, this->textureIDs[curidx]);
             glTexImage2D(GL_TEXTURE_2D,
                          0,
@@ -136,26 +140,34 @@ struct Framebuffer {
                          0);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            auto unit = GL_COLOR_ATTACHMENT0 + int(curidx-1);
+            auto drawUnit = GL_COLOR_ATTACHMENT0 + int(curidx);
+            drawBufs.push_back(drawUnit);
             glFramebufferTexture2D(GL_FRAMEBUFFER,
-                                   unit,
+                                   drawUnit,
                                    GL_TEXTURE_2D,
                                    this->textureIDs[curidx],
                                    0);
-            GLint err = glGetError();
-            if (err != GL_NO_ERROR) {
-               printf("%08X ", err);
-            }
-
-            glDrawBuffer(unit);
+//            GLint err = glGetError();
+//            if (err != GL_NO_ERROR) {
+//               printf("%08X ", err);
+//            }
+            glErr("Error on Attaching Texture2D onto Framebuffer.");
         }
-        GLint err = glGetError();
-        if (err != GL_NO_ERROR) {
-           printf("%08X ", err);
-        }
+        glDrawBuffers(int(drawBufs.size()), drawBufs.data());
+//        GLint err = glGetError();
+//        if (err != GL_NO_ERROR) {
+//           printf("%08X ", err);
+//        }
+        glErr("Error on attachTexture2D()");
         
         // unbind all
     //    glBindTexture(GL_TEXTURE_2D, 0);
+        
+        
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+        
+        
         this->unbind();
     }
 
@@ -214,7 +226,7 @@ struct Framebuffer {
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
     #endif
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
             stbi_image_free(data);
         } else {
@@ -261,6 +273,27 @@ struct Framebuffer {
         glBindVertexArray(vao);
         
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 8);
+        
+        this->unbind();
+    }
+    
+    void render(GLFWwindow* window, const GLuint vao, const GLuint veo, const GLsizei count) {
+        this->bind();
+    //    std::cout << "render id : " << this->id << std::endl;
+        
+        glViewport(0, 0, this->width, this->height);
+        glClearColor(0, 0, 0, 0);
+        if (depthTest) {
+            glEnable(GL_DEPTH_TEST);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        } else {
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
+        
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, veo);
+        
+        glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_SHORT, 0);
         
         this->unbind();
     }

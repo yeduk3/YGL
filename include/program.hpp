@@ -161,14 +161,19 @@ struct Program
         glUseProgram(programID);
     }
     
-    void setUniform(const char *uniformName, const glm::vec4 &value) {
-        glUniform4fv(glGetUniformLocation(programID, uniformName),
+    
+    void setUniform(const char *uniformName, const glm::vec2 &value) {
+        glUniform2fv(glGetUniformLocation(programID, uniformName),
                      1,
                      glm::value_ptr(value));
     }
-    
     void setUniform(const char *uniformName, const glm::vec3 &value) {
         glUniform3fv(glGetUniformLocation(programID, uniformName),
+                     1,
+                     glm::value_ptr(value));
+    }
+    void setUniform(const char *uniformName, const glm::vec4 &value) {
+        glUniform4fv(glGetUniformLocation(programID, uniformName),
                      1,
                      glm::value_ptr(value));
     }

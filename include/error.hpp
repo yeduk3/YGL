@@ -1,4 +1,5 @@
-#pragma once
+#ifndef YGL_ERROR_HPP
+#define YGL_ERROR_HPP
 
 #include <GL/glew.h>
 
@@ -43,3 +44,5 @@ void glErr(const std::string& message) {
         std::cerr << "GL Error: " << message << std::endl;
     }
 }
+
+#endif

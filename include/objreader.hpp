@@ -227,6 +227,9 @@ struct ObjData
         this->nElements4 = (int)this->elements4.size();
         this->nNormals = (int)this->normals.size();
         this->nSyncedNormals = (int)this->syncedNormals.size();
+        center = (maxPos + minPos) * 0.5f;
+        scale = maxPos - minPos;
+
 
         std::cout << "nVertices: " << this->nVertices << std::endl;
         std::cout << "nElements3: " << this->nElements3 << std::endl;
@@ -236,12 +239,9 @@ struct ObjData
         
         std::cout << "maxPos: " << maxPos.x << ", " << maxPos.y << ", " << maxPos.z << std::endl;
         std::cout << "minPos: " << minPos.x << ", " << minPos.y << ", " << minPos.z << std::endl;
-        
-        center = (maxPos + minPos) * 0.5f;
         std::cout << "center: " << center.x << ", " << center.y << ", " << center.z << std::endl;
-        
-        scale = maxPos - minPos;
         std::cout << "scale: " << scale.x << ", " << scale.y << ", " << scale.z << std::endl;
+        
         
         file.close();
 
